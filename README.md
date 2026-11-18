@@ -1,4 +1,3 @@
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTCwIQWz_XUQqNPmQDmhAtFYWtvxsnSZiMr-o8NSRQBXqRvGlLXPHIXpM79BqXaXdWgQ/exec";
 <!doctype html>
 <html lang="en">
 <head>
@@ -138,9 +137,9 @@ footer { text-align:center; font-family:var(--px); font-size:10px; color:var(--w
           <input type="text" id="sfirst" maxlength="30" autocomplete="given-name" required aria-required="true">
         </div>
         <div class="field">
-          <label for="slast">First letter of your last name <span class="hint" style="display:inline">(optional)</span></label>
-          <input type="text" id="slast" maxlength="1" autocomplete="off">
-          <span class="hint">Only needed if another reader has your first name. Sign in the same way every time so all your books stay together.</span>
+          <label for="slast">Last name <span style="color:var(--redstone)">*</span></label>
+          <input type="text" id="slast" maxlength="30" autocomplete="family-name" required aria-required="true">
+          <span class="hint">Type your first and last name the same way every time so all your books stay together.</span>
         </div>
         <button class="btn" type="submit" id="loginBtn">▶ START QUEST</button>
         <div class="msg" id="loginMsg" role="status" aria-live="polite"></div>
@@ -227,7 +226,7 @@ footer { text-align:center; font-family:var(--px); font-size:10px; color:var(--w
 
 <script>
 // ===== TEACHER SETUP: paste your Apps Script Web App URL between the quotes =====
-const WEB_APP_URL = "";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTCwIQWz_XUQqNPmQDmhAtFYWtvxsnSZiMr-o8NSRQBXqRvGlLXPHIXpM79BqXaXdWgQ/exec";
 // ================================================================================
 
 const $ = (id) => document.getElementById(id);
@@ -325,14 +324,14 @@ async function api(body) {
 function saveSession(s) { try { s ? sessionStorage.setItem("rq", JSON.stringify(s)) : sessionStorage.removeItem("rq"); } catch (e) {} }
 function loadSession() { try { return JSON.parse(sessionStorage.getItem("rq") || "null"); } catch (e) { return null; } }
 const cleanFirst = (s) => s.trim().replace(/\s+/g, " ");
-const cleanLast = (s) => s.trim().charAt(0).toUpperCase();
+const cleanLast = (s) => s.trim().replace(/\s+/g, " ");
 
 $("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const first = cleanFirst($("sfirst").value), last = cleanLast($("slast").value);
-  if (!first) return show("loginMsg", "Please type your first name to start.", false);
-  if (!/^[A-Za-z][A-Za-z' -]{0,29}$/.test(first)) return show("loginMsg", "Please type your first name using letters only.", false);
-  if ($("slast").value.trim() && !/^[A-Z]$/.test(last)) return show("loginMsg", "The last-name box only needs one letter.", false);
+  const okName = (n) => /^[A-Za-z][A-Za-z' -]{0,29}$/.test(n);
+  if (!first || !last) return show("loginMsg", "Please type your first name and your last name to start.", false);
+  if (!okName(first) || !okName(last)) return show("loginMsg", "Please use letters only in your name.", false);
   $("loginBtn").disabled = true; $("loginBtn").textContent = "LOADING...";
   try {
     const out = await api({ action: "login", first, last });
@@ -458,7 +457,8 @@ function celebrate(big) {
 const DEMO = { goal: 15, readers: [["Ava R.", 17, 980], ["Marcus T.", 14, 760], ["Zoe K.", 12, 690], ["Liam B.", 9, 455], ["Maya S.", 8, 400]], reviews: [], mine: [] };
 function demoApi(b) {
   return new Promise(res => setTimeout(() => {
-    const myName = b.first.charAt(0).toUpperCase() + b.first.slice(1).toLowerCase() + (b.last ? " " + b.last + "." : "");
+    const cap = (n) => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+    const myName = cap(b.first) + " " + b.last.charAt(0).toUpperCase() + ".";
     let levelUp = false, message = "";
     if (b.action === "log") {
       if (DEMO.mine.some(x => x.title.toLowerCase() === b.title.toLowerCase()))
