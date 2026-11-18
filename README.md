@@ -1,4 +1,4 @@
-WEB_APP_URL = "https://script.google.com/macros/s/AKfycbywO4mDpQY8lRFqqYqtysaFxXaxCkgf5HtK9Wy83vAK4vzFWz7Sr4E4L25Lr2py_LwVzg/exec"
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTCwIQWz_XUQqNPmQDmhAtFYWtvxsnSZiMr-o8NSRQBXqRvGlLXPHIXpM79BqXaXdWgQ/exec";
 <!doctype html>
 <html lang="en">
 <head>
@@ -134,13 +134,13 @@ footer { text-align:center; font-family:var(--px); font-size:10px; color:var(--w
       <h2>Sign in</h2>
       <form id="loginForm" novalidate>
         <div class="field">
-          <label for="sfirst">First name</label>
-          <input type="text" id="sfirst" maxlength="30" autocomplete="given-name" required>
+          <label for="sfirst">First name <span style="color:var(--redstone)">*</span></label>
+          <input type="text" id="sfirst" maxlength="30" autocomplete="given-name" required aria-required="true">
         </div>
         <div class="field">
-          <label for="slast">First letter of your last name</label>
-          <input type="text" id="slast" maxlength="1" autocomplete="off" required>
-          <span class="hint">Type your name the same way every time so all your books stay together.</span>
+          <label for="slast">First letter of your last name <span class="hint" style="display:inline">(optional)</span></label>
+          <input type="text" id="slast" maxlength="1" autocomplete="off">
+          <span class="hint">Only needed if another reader has your first name. Sign in the same way every time so all your books stay together.</span>
         </div>
         <button class="btn" type="submit" id="loginBtn">▶ START QUEST</button>
         <div class="msg" id="loginMsg" role="status" aria-live="polite"></div>
@@ -330,8 +330,9 @@ const cleanLast = (s) => s.trim().charAt(0).toUpperCase();
 $("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const first = cleanFirst($("sfirst").value), last = cleanLast($("slast").value);
-  if (!/^[A-Za-z][A-Za-z' -]{0,29}$/.test(first) || !/^[A-Z]$/.test(last))
-    return show("loginMsg", "Type your first name and the first letter of your last name.", false);
+  if (!first) return show("loginMsg", "Please type your first name to start.", false);
+  if (!/^[A-Za-z][A-Za-z' -]{0,29}$/.test(first)) return show("loginMsg", "Please type your first name using letters only.", false);
+  if ($("slast").value.trim() && !/^[A-Z]$/.test(last)) return show("loginMsg", "The last-name box only needs one letter.", false);
   $("loginBtn").disabled = true; $("loginBtn").textContent = "LOADING...";
   try {
     const out = await api({ action: "login", first, last });
@@ -457,7 +458,7 @@ function celebrate(big) {
 const DEMO = { goal: 15, readers: [["Ava R.", 17, 980], ["Marcus T.", 14, 760], ["Zoe K.", 12, 690], ["Liam B.", 9, 455], ["Maya S.", 8, 400]], reviews: [], mine: [] };
 function demoApi(b) {
   return new Promise(res => setTimeout(() => {
-    const myName = b.first.charAt(0).toUpperCase() + b.first.slice(1).toLowerCase() + " " + b.last + ".";
+    const myName = b.first.charAt(0).toUpperCase() + b.first.slice(1).toLowerCase() + (b.last ? " " + b.last + "." : "");
     let levelUp = false, message = "";
     if (b.action === "log") {
       if (DEMO.mine.some(x => x.title.toLowerCase() === b.title.toLowerCase()))
